@@ -1,0 +1,1 @@
+FROM ctftraining/base_image_nginx_php_73

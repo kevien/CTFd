@@ -1,0 +1,15 @@
+[common]
+token = abc123456
+server_addr = 34.221.43.63
+server_port = 7222
+pool_count = 200
+tls_enable = true
+admin_addr = 172.1.0.3
+admin_port = 7400
+
+[http_1-97d48cb0-eff0-4dc6-b5dd-b925d91f4737]
+type = http
+local_ip = 172.2.0.3
+local_port = 5000
+custom_domains = 97d48cb0-eff0-4dc6-b5dd-b925d91f4737.pwnme.cn
+use_compression = true

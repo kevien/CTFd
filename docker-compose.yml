@@ -1,12 +1,24 @@
-version: '2'
+version: '2.2'
 
 services:
+  ctfd-nginx:
+    build: ./nginx
+    user: root
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+        default:
+        internal:
+    depends_on:
+      - ctfd
+    #cpus: '2.50'
+    mem_limit: 150M
   ctfd:
     build: .
     user: root
     restart: always
-    ports:
-      - "8000:8000"
     environment:
       - UPLOAD_FOLDER=/var/uploads
       - DATABASE_URL=mysql+pymysql://root:ctfd@db/ctfd
@@ -15,15 +27,21 @@ services:
       - LOG_FOLDER=/var/log/CTFd
       - ACCESS_LOG=-
       - ERROR_LOG=-
+      - REVERSE_PROXY=true
     volumes:
       - .data/CTFd/logs:/var/log/CTFd
       - .data/CTFd/uploads:/var/uploads
       - .:/opt/CTFd:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - db
     networks:
         default:
         internal:
+        frp:
+            ipv4_address: 172.1.0.2
+    #cpus: '2.50'
+    mem_limit: 450M
 
   db:
     image: mariadb:10.4
@@ -32,23 +50,53 @@ services:
       - MYSQL_ROOT_PASSWORD=ctfd
       - MYSQL_USER=ctfd
       - MYSQL_PASSWORD=ctfd
-      - MYSQL_DATABASE=ctfd
     volumes:
       - .data/mysql:/var/lib/mysql
     networks:
         internal:
     # This command is required to set important mariadb defaults
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --wait_timeout=28800, --log-warnings=0]
+    #cpus: '2.50'
+    mem_limit: 750M
 
   cache:
     image: redis:4
     restart: always
     volumes:
-    - .data/redis:/data
+      - .data/redis:/data
     networks:
         internal:
+    #cpus: '2.50'
+    mem_limit: 450M
+
+  frpc:
+    image: glzjin/frp:latest
+    restart: always
+    volumes:
+      - ./frpc:/conf/
+    entrypoint:
+        - /usr/local/bin/frpc
+        - -c
+        - /conf/frpc.ini
+    networks:
+        frp:
+            ipv4_address: 172.1.0.3
+        frp-containers:
+    #cpus: '1.50'#
+    mem_limit: 250M
 
 networks:
     default:
     internal:
         internal: true
+    frp:
+        driver: bridge
+        ipam:
+            config:
+                - subnet: 172.1.0.0/16
+    frp-containers:
+        driver: bridge
+        internal: true
+        ipam:
+            config:
+                - subnet: 172.2.0.0/16

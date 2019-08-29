@@ -3,8 +3,8 @@ set -eo pipefail
 
 WORKERS=${WORKERS:-1}
 WORKER_CLASS=${WORKER_CLASS:-gevent}
-ACCESS_LOG=${ACCESS_LOG:--}
-ERROR_LOG=${ERROR_LOG:--}
+ACCESS_LOG=/var/log/access.log
+ERROR_LOG=/var/log/error.log
 WORKER_TEMP_DIR=${WORKER_TEMP_DIR:-/dev/shm}
 
 # Check that a .ctfd_secret_key file or SECRET_KEY envvar is set
@@ -44,5 +44,5 @@ exec gunicorn 'CTFd:create_app()' \
     --workers $WORKERS \
     --worker-tmp-dir "$WORKER_TEMP_DIR" \
     --worker-class "$WORKER_CLASS" \
-    --access-logfile "$ACCESS_LOG" \
-    --error-logfile "$ERROR_LOG"
+    --access-logfile "/var/log/gunicorn_access.log" \
+    --error-logfile "/var/log/gunicorn_error.log"
